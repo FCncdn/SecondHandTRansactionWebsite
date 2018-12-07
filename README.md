@@ -1,6 +1,10 @@
 # SecondHandTRansactionWebsite
 jsp+servlet+mysql+javaBean
 
+- Collaborators
+
+    tunlezaH
+
 - MySQL 设置
 
     driverClassName = com.mysql.jdbc.Driver
