@@ -1,72 +1,119 @@
-package Publish;
+package fuck;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.*;
+public class ItemDaoImp extends BaseDao implements MethodDao
+{
+	public static void sellItem(ItemsDao item) throws Exception
+	{
+		Connection conn = null;
+		PreparedStatement ps=null;
+        String itemName = item.getItemName();
+        String sellerId = item.getSellerId();
+        String price = item.getPrice();
+        InputStream  itemPic = item.getPic();
 
-import model.SQLConnection;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-
-public class ItemDaoImp {
-    String itemName;
-    String itemPrice;
-    String seller;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
-    private SQLConnection sqlConnection;
-
-
-    public ItemDaoImp(){
-        this.itemName = null;
-        this.itemPrice = null;
-        this.seller = null;
-        sqlConnection = new SQLConnection();
-    }
-
-    public ArrayList<Items> getItemList(String itemType){
-        ArrayList<Items> itemsArrayList = new ArrayList<Items>();
-        String sql = "select * from items where type=\""+ itemType +"\";";
-        //sql operation
-        statement = sqlConnection.connectSQL();
-        try{
-            resultSet = statement.executeQuery(sql);
-            while (resultSet.next()){
-                String itemName = resultSet.getString("item_name");
-                String itemPrice = resultSet.getString("item_price");
-                String seller = resultSet.getString("seller_id");
-                int itemId = resultSet.getInt("item_id");
-                System.out.println("ItemDaoImp - getItemList:item id, " + Integer.toString(itemId));
-                Items items = new Items(itemName,itemPrice,seller,itemId);
-                itemsArrayList.add(items);
+		try
+		{
+            conn = BaseDao.getConnection();
+            ps= conn.prepareStatement("INSERT INTO items(item_name,item_price,seller_id,item_pic) VALUES(?,?,?,?)");
+            ps.setString(1, itemName);
+            ps.setString(2, price);
+            ps.setString(3, sellerId);
+            ps.setBinaryStream(4,itemPic,itemPic.available());
+            ps.executeUpdate();
+        
+        } catch(SQLException se) {
+            se.printStackTrace();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }finally
+		{
+            try
+            {
+                if(ps!=null)
+                ps.close();
+            }catch(SQLException se2)
+            {
             }
-            System.out.println("ItemDaoImp - getItemList:get data success, list count:" + Integer.toString(itemsArrayList.size()));
-        }catch (SQLException se){
-            System.out.println(se.getMessage());
+            try
+            {
+                if(conn!=null)
+                conn.close();
+            }catch(SQLException se)
+            {
+                se.printStackTrace();
+            }
         }
-        sqlConnection.closeSQL(statement);
-        return itemsArrayList;
+
     }
-
-    public Items getItem(int itemId){
-        Items items = new Items();
-        String sql = "select * from items where item_id="+ Integer.toString(itemId) +"; ";
-        statement = sqlConnection.connectSQL();
-        try {
-            resultSet = statement.executeQuery(sql);
-            resultSet.next();
-            String itemName = resultSet.getString("item_name");
-            String itemPrice = resultSet.getString("item_price");
-            String seller = resultSet.getString("seller_id");
-            items.setGoodName(itemName);
-            items.setItemPrice(itemPrice);
-            items.setSeller(seller);
-            System.out.println("ItemDaoImp - getItem:itemName," + itemName);
-
-        }catch (SQLException se){
-            System.out.println("ItemDaoImp - getItem:error" + se.getMessage());
+	@Override
+	public boolean setUpDatabase() {
+		// TODO 
+//		CREATE TABLE IF NOT EXISTS `items`(
+//		 
+//		`item_id` INT UNSIGNED AUTO_INCREMENT,
+//		   
+//		`item_name` VARCHAR(100) NOT NULL,
+//		  
+//		`item_price` VARCHAR(100) NOT NULL,
+//		   
+//		`seller_id` VARCHAR(40) NOT NULL,
+//		  
+//		`item_pic` MEDIUMBLOB NOT NULL,
+//		PRIMARY KEY ( `item_id` )
+//
+//		)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+		return false;
+	}
+	public static void showItemPic(int id) throws Exception  {
+		// TODO Auto-generated method stub
+		Connection conn = null;
+		FileOutputStream fs=null;
+		PreparedStatement ps=null;
+		try{
+            conn = BaseDao.getConnection();
+            ps= conn.prepareStatement("SElECT item_pic from items where item_id ="+id);
+            ResultSet rset=ps.executeQuery();
+            byte b[];
+            Blob blob;
+            int i=0;
+            while(rset.next())
+            {
+             i++;
+             File f=new File("D:\\TomcatUpload\\images\\" + i + ".jpg");
+             fs=new FileOutputStream(f);
+             blob=rset.getBlob("item_pic");
+             b=blob.getBytes(1, (int)blob.length());
+             fs.write(b);
+            }
+        } catch(SQLException se) {
+            se.printStackTrace();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }finally{
+            try{
+                if(ps!=null)
+                	ps.close();
+            }catch(SQLException se2){
+            }
+            try{
+                if(conn!=null)
+                conn.close();
+            }catch(SQLException se){
+                se.printStackTrace();
+            }
+            try 
+            {
+            	if(fs!=null)
+            		fs.close();
+            }catch(IOException ioe)
+            {
+            	ioe.printStackTrace();
+            }
         }
-        sqlConnection.closeSQL(statement);
-        return items;
-    }
-
+		
+	}
 }
